@@ -1,3 +1,8 @@
+from typing import Dict
+
+import numpy as np
+from numpy import linalg as LA
+
 critics = {
     "Lisa Rose": {
         "Lady in the Water": 2.5,
@@ -49,4 +54,19 @@ critics = {
         "Superman Returns": 4.0,
     },
 }
+
+
+names = set(critics.keys())
+movies = set().union(*(critics[n].keys() for n in names))
+
+
+def sim_distance(person1: str, person2: str, prefs: Dict[str, Dict] = critics) -> float:
+
+    movies = set(prefs[person1]).intersection(prefs[person2])
+    
+    p1 = np.array([prefs[person1][m] for m in movies])
+    p2 = np.array([prefs[person2][m] for m in movies])
+
+    distance = np.sqrt(((p2 - p1) ** 2).sum())
+    return 1.0 / (1.0 + distance)
 

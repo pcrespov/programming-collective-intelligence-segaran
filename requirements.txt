@@ -2,3 +2,4 @@ fake
 jupyter
 numpy
 pandas
+matplotlib
