@@ -4,8 +4,8 @@ import numpy as np
 from numpy import linalg as LA
 
 
-def get_points(user1: str, user2: str, prefs: Dict[str, Dict]) -> Tuple[nd.array]:
-    common = set(prefs[user1]).intersection(prefs[user2])
+def get_points(user1: str, user2: str, prefs: Dict[str, Dict]) -> Tuple[np.array]:
+    common = sorted(set(prefs[user1]).intersection(prefs[user2]))
     if not common:
         return 0
 
@@ -15,7 +15,7 @@ def get_points(user1: str, user2: str, prefs: Dict[str, Dict]) -> Tuple[nd.array
     return p1, p2
 
 
-def similarity_distance(user1: str, user2: str, prefs: Dict[str, Dict]) -> float:
+def similarity_distance(user1: str, user2: str, *, prefs: Dict[str, Dict]) -> float:
 
     p1, p2 = get_points(user1, user2, prefs)
 
@@ -23,16 +23,17 @@ def similarity_distance(user1: str, user2: str, prefs: Dict[str, Dict]) -> float
     return 1.0 / (1.0 + distance)
 
 
-def similarity_pearson(user1: str, user2: str, prefs: Dict[str, Dict]) -> float:
+def similarity_pearson(user1: str, user2: str, *, prefs: Dict[str, Dict]) -> float:
 
     p1, p2 = get_points(user1, user2, prefs)
     n = len(p1)
 
-    def _var(x: nd.array, y: nd.array) -> float:
+    def _var(x: np.array, y: np.array) -> float:
         return (x * y).sum() - (x.sum() * y.sum() / n)
 
     # how much variables change together
     cross = _var(p1, p2)
     # product of individual variations
     individual = np.sqrt(_var(p1, p1) * _var(p2, p2))
+
     return cross / individual

@@ -1,4 +1,5 @@
 
+# notice that this dataset is sparce: not all movies are reviewed by all critics
 critics = {
     "Lisa Rose": {
         "Lady in the Water": 2.5,
@@ -52,5 +53,6 @@ critics = {
 }
 
 
-critic_names = set(critics.keys())
-movie_names = set().union(*(critics[n].keys() for n in critic_names))
+# sorted lists with all critic and moview names
+critic_names = sorted( set(critics.keys()) )
+movie_names = sorted( set().union(*(critics[n].keys() for n in critic_names)) )
