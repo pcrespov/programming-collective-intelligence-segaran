@@ -3,3 +3,8 @@ jupyter
 numpy
 pandas
 matplotlib
+
+
+# dev
+black
+pylint
