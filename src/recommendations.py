@@ -1,10 +1,12 @@
 from collections import defaultdict
 from operator import itemgetter
 from typing import Dict, List, Tuple
-
+import logging
 import numpy as np
 
 # from numpy import linalg as LA
+
+log = logging.getLogger(__name__)
 
 
 def get_points(user1: str, user2: str, prefs: Dict[str, Dict]) -> Tuple[np.array]:
@@ -87,6 +89,7 @@ def get_recommendations(
     for other in prefs:
         if other != user:
             sim = similarity(user, other, prefs=prefs)
+            log.debug("similarity(%s, %s) = %3.2f", user, other, sim)
 
             if sim > 0:
                 for name, score in prefs[other].items():
@@ -100,3 +103,23 @@ def get_recommendations(
     scores.sort(key=itemgetter(SCORE_INDEX), reverse=True)
 
     return scores[:count]
+
+
+def flip_mapping(prefs: Dict[str, Dict]) -> Dict[str, Dict]:
+    new_map = defaultdict(dict)
+    for key1 in prefs:
+        for key2, value in prefs[key1].items():
+            new_map[key2][key1] = value
+    return new_map
+
+
+def get_similarity_matrix(
+    prefs: Dict[str, Dict], *, similarity=similarity_pearson
+) -> Tuple[List[str], np.array]:
+
+    keys_order = sorted(prefs.keys())
+    matrix = np.array(
+        [[similarity(p1, p2, prefs=prefs) for p2 in keys_order] for p1 in keys_order]
+    )
+
+    return keys_order, matrix
