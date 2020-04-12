@@ -1,4 +1,5 @@
-from typing import Dict, Tuple
+from operator import itemgetter
+from typing import Dict, Tuple, List
 
 import numpy as np
 from numpy import linalg as LA
@@ -37,3 +38,20 @@ def similarity_pearson(user1: str, user2: str, *, prefs: Dict[str, Dict]) -> flo
     individual = np.sqrt(_var(p1, p1) * _var(p2, p2))
 
     return cross / individual
+
+
+SIMILARITY_INDEX = 0
+
+
+def eval_top_matches(
+    user: str, *, count: int = 5, similarity=similarity_pearson, prefs: Dict[str, Dict]
+) -> List[Tuple[float, str]]:
+    """ Returns top matches for a given user sorted by similarity """
+    scores = [
+        (similarity(user, other, prefs=prefs), other)
+        for other in prefs
+        if other != user
+    ]
+
+    scores.sort(key=itemgetter(SIMILARITY_INDEX), reverse=True)
+    return scores[:count]
