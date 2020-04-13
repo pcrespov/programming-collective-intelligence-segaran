@@ -5,6 +5,8 @@ pandas
 matplotlib
 
 
+Faker
+
 # dev
 black
 pylint
