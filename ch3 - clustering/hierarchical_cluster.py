@@ -27,7 +27,7 @@ class BiNode:
         return BiNode(uid, 0.5 * (left.vec + right.vec), left, right, distance)
 
     def is_leaf(self):
-        return not (self.left or self.right)
+        return self.uid < 0
 
 
 def hcluster(table: List[List[Any]], distance_fun=pearson_distance) -> BiNode:
@@ -82,6 +82,12 @@ def print_cluster(node: BiNode, labels: List[str], deep: int = 0):
 
 def main():
     data = load_data()
-    col_names = data["words"]
-    row_names = [blog["name"] for blog in data["blogs"]]
+    words = data["words"]
+    blogs = [blog["name"] for blog in data["blogs"]]
     table = np.array([blog["wc"] for blog in data["blogs"]])
+
+    root = hcluster(table)
+    print_cluster(root, labels=blogs )
+
+if __name__ == "__main__":
+    main()

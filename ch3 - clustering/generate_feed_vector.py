@@ -74,7 +74,7 @@ def generate():
             apcount.update(wc.keys())
             feeds[blog_name] = url
         except Exception:  # pylint: disable=broad-except
-            log.error("%s failed")
+            log.error("%s failed", url)
 
     log.info("%3.1f %% of feeds worked", len(feeds) / len(target_feeds))
 
