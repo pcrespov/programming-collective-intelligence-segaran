@@ -5,7 +5,9 @@ pandas
 matplotlib
 
 
+# test
 Faker
+pytest
 
 # dev
 black

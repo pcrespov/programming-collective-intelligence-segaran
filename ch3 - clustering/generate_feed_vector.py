@@ -112,6 +112,12 @@ def filter_and_pack(
     return data
 
 
+def load_data() -> Dict:
+    with open(data_dir / "blogdata.json", "rt") as fh:
+        data = json.load(fh)
+    return data
+
+
 def main():
     feeds, wc_per_blog, apcount = generate()
 
