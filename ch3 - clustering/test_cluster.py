@@ -37,3 +37,14 @@ def test_hcluster(blogs_words_subset):
     # TODO: this hsould be automatic... with mipy??
     print()
     print_cluster(btree, labels=blogs, deep=0)
+
+
+from PIL import Image, ImageDraw, ImageFont
+
+def test_pillow_font_encoding():
+    # SEE https://github.com/python-pillow/Pillow/issues/2779
+    text = u"RSS feed \u2013 Search Engine Watch"
+    img = Image.new('RGB', (10,10))
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype('Arial')
+    draw.text((0,0), text, "white", font=font)

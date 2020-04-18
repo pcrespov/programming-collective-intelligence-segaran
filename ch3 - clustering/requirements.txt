@@ -1,2 +1,5 @@
 feedparser
 attrs
+
+# fork of PIL: https://pillow.readthedocs.io/en/stable/handbook/index.html
+pillow
