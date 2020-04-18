@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import sys
 
 from typing import Any, List, Optional
 
@@ -8,6 +8,11 @@ import numpy as np
 
 from generate_feed_vector import load_data
 from metrics import pearson_distance
+import logging
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
 
 # SEE https://www.python.org/dev/peps/pep-0563/
 
@@ -80,14 +85,22 @@ def print_cluster(node: BiNode, labels: List[str], deep: int = 0):
         print(indent, labels[node.uid], deep+1)
 
 
-def main():
+def main(revert: bool=False):
     data = load_data()
     words = data["words"]
     blogs = [blog["name"] for blog in data["blogs"]]
     table = np.array([blog["wc"] for blog in data["blogs"]])
 
+    log.info(" # words: %3d", len(words))
+    log.info(" # blogs: %3d", len(blogs))
+
+    labels = blogs
+    if revert:
+        table = table.T
+        labels = words
+
     root = hcluster(table)
-    print_cluster(root, labels=blogs )
+    print_cluster(root, labels )
 
 if __name__ == "__main__":
-    main()
+    main( revert=len(sys.argv)>1 )
