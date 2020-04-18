@@ -20,10 +20,11 @@ class BiNode:
     # binary tree children
     left: Optional[BiNode] = None
     right: Optional[BiNode] = None
+    distance: Optional[float] = None # distance(left, right)
 
     @classmethod
-    def from_nodes(cls, uid: int, left: BiNode, right: BiNode):
-        return BiNode(uid, 0.5 * (left.vec + right.vec), left, right)
+    def from_nodes(cls, uid: int, left: BiNode, right: BiNode, distance: float):
+        return BiNode(uid, 0.5 * (left.vec + right.vec), left, right, distance)
 
     def is_leaf(self):
         return not (self.left or self.right)
@@ -61,13 +62,22 @@ def hcluster(table: List[List[Any]], distance_fun=pearson_distance) -> BiNode:
         # cluster identified with negavite uid
         cluster_counter += 1
         cluster = BiNode.from_nodes(
-            uid=-cluster_counter, left=items[i0], right=items[j0]
+            uid=-cluster_counter, left=items[i0], right=items[j0], distance=dmin,
         )
         del items[j0]  # first largest
         del items[i0]
         items.append(cluster)
 
     return items[0] if items else None
+
+def print_cluster(node: BiNode, labels: List[str], deep: int = 0):
+    indent = " " * deep
+    if node.is_leaf():
+        print(indent, "+", f"[{node.distance:3.2f}]")
+        print_cluster(node.left, labels, deep + 1)
+        print_cluster(node.right, labels, deep + 1)
+    else:
+        print(indent, labels[node.uid], deep+1)
 
 
 def main():

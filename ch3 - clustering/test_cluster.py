@@ -5,8 +5,8 @@
 import numpy as np
 import pytest
 
-from hierarchical_cluster import BiNode, hcluster
-from metrics import eucledian_distance, pearson_distance
+from hierarchical_cluster import BiNode, hcluster, print_cluster
+from metrics import pearson_distance
 
 
 @pytest.fixture()
@@ -35,3 +35,5 @@ def test_hcluster(blogs_words_subset):
     assert btree.right
 
     # TODO: this hsould be automatic... with mipy??
+    print()
+    print_cluster(btree, labels=blogs, deep=0)
