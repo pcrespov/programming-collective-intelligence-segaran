@@ -4,8 +4,10 @@
 
 import numpy as np
 import pytest
+from PIL import Image, ImageDraw, ImageFont
 
-from hierarchical_cluster import BiNode, hcluster, print_cluster
+from hcluster_algoritms import BiNode, hcluster
+from hcluster_representation import print_cluster
 from metrics import pearson_distance
 
 
@@ -39,7 +41,6 @@ def test_hcluster(blogs_words_subset):
     print_cluster(btree, labels=blogs, deep=0)
 
 
-from PIL import Image, ImageDraw, ImageFont
 
 def test_pillow_font_encoding():
     # SEE https://github.com/python-pillow/Pillow/issues/2779
