@@ -30,7 +30,7 @@ class BiNode:
         return BiNode(uid, 0.5 * (left.vec + right.vec), left, right, distance)
 
     def is_leaf(self):
-        return self.uid < 0
+        return self.uid >= 0
 
 
 def hcluster(table: List[List[Any]], distance_fun=pearson_distance) -> BiNode:

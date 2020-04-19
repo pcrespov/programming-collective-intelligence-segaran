@@ -15,7 +15,7 @@ BLACK = (0,) * 3
 
 def print_cluster(node: BiNode, labels: List[str], deep: int = 0):
     indent = " " * deep
-    if node.is_leaf():
+    if not node.is_leaf():
         print(indent, "+", f"[{node.distance:3.2f}]")
         print_cluster(node.left, labels, deep + 1)
         print_cluster(node.right, labels, deep + 1)
