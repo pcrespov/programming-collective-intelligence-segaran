@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 # SEE https://www.python.org/dev/peps/pep-0563/
 
 import logging
@@ -12,7 +13,6 @@ from metrics import pearson_distance
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -72,6 +72,3 @@ def hcluster(table: List[List[Any]], distance_fun=pearson_distance) -> BiNode:
         items.append(cluster)
 
     return items[0] if items else None
-
-
-

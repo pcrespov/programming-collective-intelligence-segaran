@@ -11,7 +11,7 @@ def eucledian_distance(p1: np.array, p2: np.array, *, normalize=False) -> float:
 
 def pearson_distance(p1: np.array, p2: np.array) -> float:
     dim = p1.size
-    assert dim>=1
+    assert dim >= 1
 
     def _var(x: np.array, y: np.array) -> float:
         return (x * y).sum() - (x.sum() * y.sum() / dim)
@@ -24,10 +24,10 @@ def pearson_distance(p1: np.array, p2: np.array) -> float:
 
     # how much variables change together
     cross_vars = _var(p1, p2)
-    
+
     # match = 1, no-relation=0, opposite relation<0
     similar = cross_vars / self_vars
 
-    # match = distance = 0 
+    # match = distance = 0
     distance = 1.0 - similar
     return distance

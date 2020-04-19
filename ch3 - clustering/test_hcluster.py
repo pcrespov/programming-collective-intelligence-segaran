@@ -41,11 +41,10 @@ def test_hcluster(blogs_words_subset):
     print_cluster(btree, labels=blogs, deep=0)
 
 
-
 def test_pillow_font_encoding():
     # SEE https://github.com/python-pillow/Pillow/issues/2779
     text = u"RSS feed \u2013 Search Engine Watch"
-    img = Image.new('RGB', (10,10))
+    img = Image.new("RGB", (10, 10))
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype('Arial')
-    draw.text((0,0), text, "white", font=font)
+    font = ImageFont.truetype("Arial")
+    draw.text((0, 0), text, "white", font=font)
