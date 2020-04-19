@@ -36,7 +36,7 @@ help:
 	@echo ""
 
 .PHONY: clean
-_GIT_CLEAN_ARGS = -dxf -e .vscode
+_GIT_CLEAN_ARGS = -dxf -e .vscode -e .venv -e data
 clean: ## cleans all unversioned files in project and temp files create by this makefile
 	# Cleaning unversioned
 	@git clean -n $(_GIT_CLEAN_ARGS)
