@@ -1,0 +1,3 @@
+outs:
+- md5: 893833d102d824d861dde361dcb105ff
+  path: schedule.csv
