@@ -1,7 +1,8 @@
+import logging
 from collections import defaultdict
 from operator import itemgetter
 from typing import Dict, List, Tuple
-import logging
+
 import numpy as np
 
 # from numpy import linalg as LA
