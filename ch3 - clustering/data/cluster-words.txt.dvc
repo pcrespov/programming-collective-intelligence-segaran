@@ -1,0 +1,3 @@
+outs:
+- md5: 13a8c5433ccd28fabb9a69fb4747c161
+  path: cluster-words.txt
