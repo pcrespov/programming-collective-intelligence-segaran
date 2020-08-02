@@ -126,7 +126,7 @@ Domain = List[Tuple[int, int]]
 
 
 def randomoptimize(
-    domain: Domain, costf: CostFunction, num_iter: int = 1000
+    domain: Domain, costf: CostFunction, *, num_iter: int = 1000
 ) -> SolutionVec:
     best = 999999999
     bestr = None
@@ -148,7 +148,7 @@ def randomoptimize(
 
 
 def hillclimb(
-    domain: Domain, costf: CostFunction, init_sol: Optional[SolutionVec] = None
+    domain: Domain, costf: CostFunction, *, init_sol: Optional[SolutionVec] = None
 ) -> SolutionVec:
     # Create a random solution
     sol = init_sol or [
@@ -182,9 +182,17 @@ def hillclimb(
     return sol
 
 
-def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
+def annealingoptimize(
+    domain: Domain,
+    costf: CostFunction,
+    *,
+    init_sol: Optional[SolutionVec] = None,
+    T=10000.0,
+    cool=0.95,
+    step=1,
+) -> SolutionVec:
     # Initialize the values randomly
-    vec = [
+    vec = init_sol or [
         float(random.randint(domain[i][0], domain[i][1])) for i in range(len(domain))
     ]
 
@@ -193,11 +201,11 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
         i = random.randint(0, len(domain) - 1)
 
         # Choose a direction to change it
-        dir = random.randint(-step, step)
+        dir_ = random.randint(-step, step)
 
         # Create a new list with one of the values changed
         vecb = vec[:]
-        vecb[i] += dir
+        vecb[i] += dir_
         if vecb[i] < domain[i][0]:
             vecb[i] = domain[i][0]
         elif vecb[i] > domain[i][1]:
@@ -206,7 +214,9 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
         # Calculate the current cost and the new cost
         ea = costf(vec)
         eb = costf(vecb)
-        p = pow(math.e, -(eb - ea) / T)
+
+        # positive exp might produce OverflowError
+        p = pow(math.e, -(eb - ea) / T) if eb >= ea else 1
 
         # Is it better, or does it make the probability
         # cutoff?
@@ -215,12 +225,20 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
 
         # Decrease the temperature
         T = T * cool
+
     return vec
 
 
 def geneticoptimize(
-    domain, costf, popsize=50, step=1, mutprod=0.2, elite=0.2, maxiter=100
-):
+    domain: Domain,
+    costf: CostFunction,
+    *,
+    popsize=50,
+    step=1,
+    mutprod=0.2,
+    elite=0.2,
+    maxiter=100,
+) -> SolutionVec:
     # Mutation Operation
     def mutate(vec):
         i = random.randint(0, len(domain) - 1)
