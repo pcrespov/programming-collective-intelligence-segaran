@@ -1,7 +1,11 @@
 import math
 import random
 import time
+from collections import defaultdict
+from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple
 
+# name, origin
 people = [
     ("Seymour", "BOS"),
     ("Franny", "DAL"),
@@ -10,78 +14,123 @@ people = [
     ("Buddy", "ORD"),
     ("Les", "OMA"),
 ]
-# Laguardia
+# overall destination
 destination = "LGA"
 
-flights = {}
-#
-for line in file("data/schedule.csv"):
+
+flights = defaultdict(list)
+DEP, ARR, PRIZE = range(3)
+
+for line in Path("data/schedule.csv").read_text().split():
     origin, dest, depart, arrive, price = line.strip().split(",")
-    flights.setdefault((origin, dest), [])
 
     # Add details to the list of possible flights
     flights[(origin, dest)].append((depart, arrive, int(price)))
 
 
-def getminutes(t):
+# ----------------
+
+
+def getminutes(t: str) -> float:
     x = time.strptime(t, "%H:%M")
     return x[3] * 60 + x[4]
 
 
-def printschedule(r):
-    for d in range(len(r) / 2):
-        name = people[d][0]
-        origin = people[d][1]
+def printschedule(r: List[int]) -> None:
+    # r is a solution vector
+    #
+    #
+    # Example:  [1, 4, 3, 2]
+    #  Means that user1 takes 1st flight in his list to destination and
+    #  4th flight in his list back
+    #  and user2 does the same with flights 3rd and 2nd
+    #
+    #
+    people_count = int(len(r) / 2)
+    total_out = 0
+    total_ret = 0
+    for d in range(people_count):
+        name, origin = people[d]
+
+        # departure-time, arrive-time, prize
         out = flights[(origin, destination)][int(r[d])]
         ret = flights[(destination, origin)][int(r[d + 1])]
         print(
             "%10s%10s %5s-%5s $%3s %5s-%5s $%3s"
-            % (name, origin, out[0], out[1], out[2], ret[0], ret[1], ret[2],)
+            % (
+                name,
+                origin,
+                out[DEP],
+                out[ARR],
+                out[PRIZE],
+                ret[DEP],
+                ret[ARR],
+                ret[PRIZE],
+            )
         )
+        total_out += out[PRIZE]
+        total_ret += ret[PRIZE]
+
+    NADA = ""
+    print(f"{NADA:10s}{NADA:10s} {NADA:11s} ${total_out:3d} {NADA:10s} ${total_ret:3d}")
 
 
-def schedulecost(sol):
+def schedulecost(sol: List[int]) -> float:
+    """
+        Cost function for a solution vector
+    """
     totalprice = 0
     latestarrival = 0
     earliestdep = 24 * 60
+    people_count = int(len(sol) / 2)
 
-    for d in range(len(sol) / 2):
+    for d in range(people_count):
         # Get the inbound and outbound flights
         origin = people[d][1]
+
+        # [departure, arrival, prize]
         outbound = flights[(origin, destination)][int(sol[d])]
         returnf = flights[(destination, origin)][int(sol[d + 1])]
 
         # Total price is the price of all outbound and return flights
-        totalprice += outbound[2]
-        totalprice += returnf[2]
+        totalprice += outbound[PRIZE]
+        totalprice += returnf[PRIZE]
 
         # Track the latest arrival and earliest departure
-        if latestarrival < getminutes(outbound[1]):
-            latestarrival = getminutes(outbound[1])
-        if earliestdep > getminutes(returnf[0]):
-            earliestdep = getminutes(returnf[0])
+        if latestarrival < getminutes(outbound[ARR]):
+            latestarrival = getminutes(outbound[ARR])
+        if earliestdep > getminutes(returnf[DEP]):
+            earliestdep = getminutes(returnf[DEP])
 
     # Every person must wait at the airport until the latest person arrives.
     # They also must arrive at the same time and wait for their flights.
     totalwait = 0
-    for d in range(len(sol) / 2):
+    for d in range(people_count):
         origin = people[d][1]
         outbound = flights[(origin, destination)][int(sol[d])]
         returnf = flights[(destination, origin)][int(sol[d + 1])]
-        totalwait += latestarrival - getminutes(outbound[1])
-        totalwait += getminutes(returnf[0]) - earliestdep
+        totalwait += latestarrival - getminutes(outbound[ARR])
+        totalwait += getminutes(returnf[DEP]) - earliestdep
 
     # Does this solution require an extra day of car rental? That'll be $50!
+    # If the first leaving is before that the last arriving
     if latestarrival > earliestdep:
         totalprice += 50
 
     return totalprice + totalwait
 
 
-def randomoptimize(domain, costf):
+SolutionVec = List[int]
+CostFunction = Callable[[SolutionVec], float]
+Domain = List[Tuple[int, int]]
+
+
+def randomoptimize(
+    domain: Domain, costf: CostFunction, num_iter: int = 1000
+) -> SolutionVec:
     best = 999999999
     bestr = None
-    for i in range(0, 1000):
+    for i in range(0, num_iter):
         # Create a random solution
         r = [
             float(random.randint(domain[i][0], domain[i][1]))
@@ -98,9 +147,14 @@ def randomoptimize(domain, costf):
     return bestr
 
 
-def hillclimb(domain, costf):
+def hillclimb(
+    domain: Domain, costf: CostFunction, init_sol: Optional[SolutionVec] = None
+) -> SolutionVec:
     # Create a random solution
-    sol = [random.randint(domain[i][0], domain[i][1]) for i in range(len(domain))]
+    sol = init_sol or [
+        random.randint(domain[i][0], domain[i][1]) for i in range(len(domain))
+    ]
+
     # Main loop
     while 1:
         # Create list of neighboring solutions
@@ -108,7 +162,7 @@ def hillclimb(domain, costf):
 
         for j in range(len(domain)):
             # One away in each direction
-            if sol[j] > domain[j][0]:
+            if domain[j][0] < sol[j]:
                 neighbors.append(sol[0:j] + [sol[j] - 1] + sol[j + 1 :])
             if sol[j] < domain[j][1]:
                 neighbors.append(sol[0:j] + [sol[j] + 1] + sol[j + 1 :])
