@@ -45,7 +45,7 @@ def printschedule(r: List[int]) -> None:
     #  4th flight in his list back
     #  and user2 does the same with flights 3rd and 2nd
     #
-    #
+
     people_count = int(len(r) / 2)
     total_out = 0
     total_ret = 0
@@ -73,6 +73,7 @@ def printschedule(r: List[int]) -> None:
 
     NADA = ""
     print(f"{NADA:10s}{NADA:10s} {NADA:11s} ${total_out:3d} {NADA:10s} ${total_ret:3d}")
+    print("cost: ", schedulecost(r))
 
 
 def schedulecost(sol: List[int]) -> float:
@@ -187,9 +188,9 @@ def annealingoptimize(
     costf: CostFunction,
     *,
     init_sol: Optional[SolutionVec] = None,
-    T=10000.0,
-    cool=0.95,
-    step=1,
+    T: float = 10000.0,
+    cool: float = 0.95,
+    step: int = 1,
 ) -> SolutionVec:
     # Initialize the values randomly
     vec = init_sol or [
@@ -229,37 +230,48 @@ def annealingoptimize(
     return vec
 
 
+def print_best(i, scores):
+    # Print current best score
+    print(i, scores[0][0])
+
+
 def geneticoptimize(
     domain: Domain,
     costf: CostFunction,
     *,
-    popsize=50,
-    step=1,
-    mutprod=0.2,
-    elite=0.2,
-    maxiter=100,
+    init_pop: Optional[List[SolutionVec]] = None,
+    popsize: int = 50,
+    step: int = 1,
+    mutprob: float = 0.2,
+    elite_ratio: float = 0.2,
+    maxiter: int = 100,
+    iterated_callback: Callable = print_best,
 ) -> SolutionVec:
     # Mutation Operation
+    # random change in existing soluton
     def mutate(vec):
         i = random.randint(0, len(domain) - 1)
         if random.random() < 0.5 and vec[i] > domain[i][0]:
             return vec[0:i] + [vec[i] - step] + vec[i + 1 :]
         elif vec[i] < domain[i][1]:
             return vec[0:i] + [vec[i] + step] + vec[i + 1 :]
+        else:
+            return vec
 
-    # Crossover Operation
+    # Crossover or Breeding Operation:
+    # taking two of the best solutions and combining it in some way
     def crossover(r1, r2):
         i = random.randint(1, len(domain) - 2)
         return r1[0:i] + r2[i:]
 
     # Build the initial population
-    pop = []
-    for i in range(popsize):
-        vec = [random.randint(domain[i][0], domain[i][1]) for i in range(len(domain))]
+    pop = init_pop or []
+    while len(pop) < popsize:
+        vec = [random.randint(limit[0], limit[1]) for limit in domain]
         pop.append(vec)
 
     # How many winners from each generation?
-    topelite = int(elite * popsize)
+    topelite = int(elite_ratio * popsize)
 
     # Main loop
     for i in range(maxiter):
@@ -284,7 +296,6 @@ def geneticoptimize(
                 c2 = random.randint(0, topelite)
                 pop.append(crossover(ranked[c1], ranked[c2]))
 
-        # Print current best score
-        print(scores[0][0])
+        iterated_callback(i, scores)
 
     return scores[0][1]
