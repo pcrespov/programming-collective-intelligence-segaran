@@ -1,0 +1,7 @@
+# dev
+black
+isort
+dvc
+
+#
+jupyter
