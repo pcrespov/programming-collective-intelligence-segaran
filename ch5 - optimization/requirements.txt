@@ -1,7 +1,4 @@
-# dev
-black
-isort
-dvc
+-r ../requirements-dev.txt
 
 #
 jupyter

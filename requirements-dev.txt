@@ -1,0 +1,5 @@
+# development
+rope
+pylint
+isort
+dvc
