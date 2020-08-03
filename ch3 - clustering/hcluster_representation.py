@@ -1,9 +1,8 @@
 import logging
 from typing import List
 
+from hcluster_algorithms import BiNode
 from PIL import Image, ImageDraw, ImageFont
-
-from hcluster_algoritms import BiNode
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

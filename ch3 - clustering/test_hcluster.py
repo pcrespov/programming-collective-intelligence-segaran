@@ -3,12 +3,12 @@
 # pylint:disable=redefined-outer-name
 
 import numpy as np
-import pytest
-from PIL import Image, ImageDraw, ImageFont
 
-from hcluster_algoritms import BiNode, hcluster
+import pytest
+from hcluster_algorithms import BiNode, hcluster
 from hcluster_representation import print_cluster
 from metrics import pearson_distance
+from PIL import Image, ImageDraw, ImageFont
 
 
 @pytest.fixture()

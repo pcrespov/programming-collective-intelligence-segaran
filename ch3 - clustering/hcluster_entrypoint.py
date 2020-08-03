@@ -4,7 +4,7 @@ import sys
 import numpy as np
 
 from generate_feed_vector import load_data
-from hcluster_algoritms import hcluster
+from hcluster_algorithms import hcluster
 from hcluster_representation import print_cluster
 
 logging.basicConfig(level=logging.INFO)
