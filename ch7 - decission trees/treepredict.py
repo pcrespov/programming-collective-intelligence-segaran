@@ -1,9 +1,18 @@
-from dataclasses import dataclass
-from typing import Union
+from collections import namedtuple
+from dataclasses import dataclass, field
+from math import log
+from typing import Dict, List, Optional, Union
 
 from PIL import Image, ImageDraw
 
-my_data = [
+
+TableValue = Union[str, int, float]
+Table = List[List[TableValue]]
+
+COLS = ["referrer", "location", "read_faq", "pages_viewed", "service_chosen"]
+Observation = namedtuple("Observation", COLS[:-1])
+
+my_data: Table = [
     ["slashdot", "USA", "yes", 18, "None"],
     ["google", "France", "yes", 23, "Premium"],
     ["digg", "USA", "yes", 24, "Basic"],
@@ -22,18 +31,21 @@ my_data = [
     ["kiwitobes", "France", "yes", 19, "Basic"],
 ]
 
+log2 = lambda x: log(x) / log(2)
+
 
 @dataclass
 class DecisionNode:
-  col: int =-1
-  value: Union[str,float,int, None] = None
-  results=None
-  tb = None
-  fb = None
+    col: int = -1
+    value: Union[str, float, int, None] = None
+    results: Dict[str, int] = field(default_factory=dict)
+    tb: Optional["DecisionNode"] = None
+    fb: Optional["DecisionNode"] = None
+
 
 # Divides a set on a specific column. Can handle numeric
 # or nominal values
-def divideset(rows, column: int, value):
+def divideset(rows: Table, column: int, value: TableValue):
     # Make a function that tells us if a row is in
     # the first group (true) or the second group (false)
     split_function = None
@@ -46,16 +58,18 @@ def divideset(rows, column: int, value):
     set1 = []
     set2 = []
     for row in rows:
-      if split_function(row):
-        set1.append(row)
-      else:
-        set2.append(row)
+        if split_function(row):
+            set1.append(row)
+        else:
+            set2.append(row)
     return (set1, set2)
 
 
-# Create counts of possible results (the last column of
-# each row is the result)
-def uniquecounts(rows):
+def uniquecounts(rows: Table):
+    """
+        Create counts of possible results (the last column of
+    each row is the result
+    """
     results = {}
     for row in rows:
         # The result is the last column
@@ -66,9 +80,11 @@ def uniquecounts(rows):
     return results
 
 
-# Probability that a randomly placed item will
-# be in the wrong category
-def giniimpurity(rows):
+def giniimpurity(rows: Table):
+    """
+     Probability that a randomly placed item will
+     be in the wrong category
+    """
     total = len(rows)
     counts = uniquecounts(rows)
     imp = 0
@@ -82,12 +98,11 @@ def giniimpurity(rows):
     return imp
 
 
-# Entropy is the sum of p(x)log(p(x)) across all
-# the different possible results
-def entropy(rows):
-    from math import log
-
-    log2 = lambda x: log(x) / log(2)
+def entropy(rows: Table):
+    """
+    Entropy is the sum of p(x)log(p(x)) across all
+    the different possible results
+    """
     results = uniquecounts(rows)
     # Now calculate the entropy
     ent = 0.0
@@ -97,13 +112,13 @@ def entropy(rows):
     return ent
 
 
-def printtree(tree, indent=""):
+def printtree(tree: DecisionNode, indent: str = ""):
     # Is this a leaf node?
-    if tree.results != None:
+    if tree.results:
         print(str(tree.results))
     else:
         # Print the criteria
-        print(str(tree.col) + ":" + str(tree.value) + "? ")
+        print(COLS[tree.col] + ":" + str(tree.value) + "? ")
 
         # Print the branches
         print(indent + "T->", end=" ")
@@ -112,21 +127,19 @@ def printtree(tree, indent=""):
         printtree(tree.fb, indent + "  ")
 
 
-def getwidth(tree):
+def getwidth(tree: DecisionNode):
     if tree.tb == None and tree.fb == None:
         return 1
     return getwidth(tree.tb) + getwidth(tree.fb)
 
 
-def getdepth(tree):
+def getdepth(tree: DecisionNode):
     if tree.tb == None and tree.fb == None:
         return 0
     return max(getdepth(tree.tb), getdepth(tree.fb)) + 1
 
 
-
-
-def drawtree(tree, jpeg="tree.jpg"):
+def drawtree(tree: DecisionNode, jpeg: Optional[str] = "tree.jpg"):
     w = getwidth(tree) * 100
     h = getdepth(tree) * 100 + 120
 
@@ -134,11 +147,13 @@ def drawtree(tree, jpeg="tree.jpg"):
     draw = ImageDraw.Draw(img)
 
     drawnode(draw, tree, w / 2, 20)
-    img.save(jpeg, "JPEG")
+    if jpeg:
+        img.save(jpeg, "JPEG")
+    return img
 
 
-def drawnode(draw, tree, x, y):
-    if tree.results == None:
+def drawnode(draw: ImageDraw, tree: DecisionNode, x: float, y: float):
+    if not tree.results:
         # Get the width of each branch
         w1 = getwidth(tree.fb) * 100
         w2 = getwidth(tree.tb) * 100
@@ -148,7 +163,7 @@ def drawnode(draw, tree, x, y):
         right = x + (w1 + w2) / 2
 
         # Draw the condition string
-        draw.text((x - 20, y - 10), str(tree.col) + ":" + str(tree.value), (0, 0, 0))
+        draw.text((x - 20, y - 10), f"{COLS[tree.col]} : {tree.value}?", (0, 0, 0))
 
         # Draw links to the branches
         draw.line((x, y, left + w1 / 2, y + 100), fill=(255, 0, 0))
@@ -162,8 +177,8 @@ def drawnode(draw, tree, x, y):
         draw.text((x - 20, y), txt, (0, 0, 0))
 
 
-def classify(observation, tree):
-    if tree.results != None:
+def classify(observation: List, tree: DecisionNode):
+    if tree.results:
         return tree.results
     else:
         v = observation[tree.col]
@@ -181,7 +196,7 @@ def classify(observation, tree):
         return classify(observation, branch)
 
 
-def prune(tree, mingain):
+def prune(tree: DecisionNode, mingain):
     # If the branches aren't leaves, then prune them
     if tree.tb.results == None:
         prune(tree.tb, mingain)
