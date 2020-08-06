@@ -196,16 +196,16 @@ def classify(observation: List, tree: DecisionNode):
         return classify(observation, branch)
 
 
-def prune(tree: DecisionNode, mingain):
+def prune(tree: DecisionNode, mingain: float):
     # If the branches aren't leaves, then prune them
-    if tree.tb.results == None:
+    if not tree.tb.results:
         prune(tree.tb, mingain)
-    if tree.fb.results == None:
+    if not tree.fb.results:
         prune(tree.fb, mingain)
 
     # If both the subbranches are now leaves, see if they
     # should merged
-    if tree.tb.results != None and tree.fb.results != None:
+    if tree.tb.results and tree.fb.results:
         # Build a combined dataset
         tb, fb = [], []
         for v, c in list(tree.tb.results.items()):
@@ -223,11 +223,11 @@ def prune(tree: DecisionNode, mingain):
 
 
 def mdclassify(observation, tree):
-    if tree.results != None:
+    if tree.results:
         return tree.results
     else:
         v = observation[tree.col]
-        if v == None:
+        if v is None:
             tr, fr = mdclassify(observation, tree.tb), mdclassify(observation, tree.fb)
             tcount = sum(tr.values())
             fcount = sum(fr.values())
