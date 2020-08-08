@@ -1,0 +1,7 @@
+-r ../requirements-dev.txt
+
+
+# fork of PIL: https://pillow.readthedocs.io/en/stable/handbook/index.html
+pillow
+numpy
+jupyter
