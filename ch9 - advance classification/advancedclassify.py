@@ -1,4 +1,11 @@
-class matchrow:
+from urllib.parse import quote_plus
+from urllib.request import urlopen
+from xml.dom.minidom import parseString
+
+from pylab import *
+
+
+class MatchRow:
     def __init__(self, row, allnum=False):
         if allnum:
             self.data = [float(row[i]) for i in range(len(row) - 1)]
@@ -10,11 +17,8 @@ class matchrow:
 def loadmatch(f, allnum=False):
     rows = []
     for line in file(f):
-        rows.append(matchrow(line.split(","), allnum))
+        rows.append(MatchRow(line.split(","), allnum))
     return rows
-
-
-from pylab import *
 
 
 def plotagematches(rows):
@@ -96,9 +100,6 @@ def matchcount(interest1, interest2):
 
 
 yahookey = "YOUR API KEY"
-from urllib.parse import quote_plus
-from urllib.request import urlopen
-from xml.dom.minidom import parseString
 
 loc_cache = {}
 
@@ -141,7 +142,7 @@ def loadnumerical():
             milesdistance(d[4], d[9]),
             row.match,
         ]
-        newrows.append(matchrow(data))
+        newrows.append(MatchRow(data))
     return newrows
 
 
@@ -162,7 +163,7 @@ def scaledata(rows):
         return [(d[i] - low[i]) / (high[i] - low[i]) for i in range(len(low))]
 
     # Scale all the data
-    newrows = [matchrow(scaleinput(row.data) + [row.match]) for row in rows]
+    newrows = [MatchRow(scaleinput(row.data) + [row.match]) for row in rows]
 
     # Return the new data and the function
     return newrows, scaleinput
