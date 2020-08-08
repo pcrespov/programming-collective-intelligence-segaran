@@ -1,5 +1,6 @@
 # development
 rope
+black
 pylint
 isort
 dvc
