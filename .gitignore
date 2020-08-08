@@ -140,3 +140,6 @@ cython_debug/
 
 .vscode/*
 !.vscode/*.template.json
+
+# backup files created after conversion
+*.bak

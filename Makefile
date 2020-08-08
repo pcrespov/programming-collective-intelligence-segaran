@@ -33,8 +33,6 @@ autoformat: ## runs black python formatter on this service's code. Use AFTER mak
 .PHONY: convert
 convert: ## converts files from python v2 to v3
 	2to3 -w $(shell find . -type f -name "*.py")
-	# deleting bak files with old version
-	rm $(shell find . -type f -name "*.bak")
 
 
 .PHONY: help
