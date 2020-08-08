@@ -4,9 +4,14 @@
 # Use bash not sh
 SHELL := /bin/bash
 
-.venv:
-	python3 -m venv .venv
-	.venv/bin/python -m pip install --upgrade pip wheel setuptools
+REPO_DIR := $(shell git rev-parse --show-toplevel)
+VIRTUALENV := $(REPO_DIR)/.venv
+
+
+.PHONY: venv
+venv: ## creates virtualenvironment at the repo's root folder
+	python3 -m venv $(VIRTUALENV)
+	$(VIRTUALENV)/bin/python -m pip install --upgrade pip wheel setuptools
 
 
 .PHONY: autoformat
@@ -18,11 +23,11 @@ autoformat: ## runs black python formatter on this service's code. Use AFTER mak
 		--skip-glob */.dvc/* \
 		--skip-glob */.venv/* \
 		--skip-glob */.vscode/* \
-		$(CURDIR)
+		"$(CURDIR)"
 	# auto formatting with black
 	@python3 -m black --verbose \
 		--exclude "/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist|migration|client-sdk|generated_code)/" \
-		$(CURDIR)
+		"$(CURDIR)"
 
 
 .PHONY: help
