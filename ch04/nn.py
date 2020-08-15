@@ -1,6 +1,5 @@
+import sqlite3 as sqlite
 from math import tanh
-
-from pysqlite2 import dbapi2 as sqlite
 
 
 def dtanh(y):
@@ -15,21 +14,22 @@ class SearchNet:
         self.con.close()
 
     def maketables(self):
-        self.con.execute("create table hiddennode(create_key)")
-        self.con.execute("create table wordhidden(fromid,toid,strength)")
-        self.con.execute("create table hiddenurl(fromid,toid,strength)")
+        c = self.con.cursor()
+        c.execute("create table hiddennode(create_key)")
+        c.execute("create table wordhidden(fromid,toid,strength)")
+        c.execute("create table hiddenurl(fromid,toid,strength)")
         self.con.commit()
 
     def getstrength(self, fromid, toid, layer):
+        c = self.con.cursor()
         if layer == 0:
             table = "wordhidden"
         else:
             table = "hiddenurl"
-        res = self.con.execute(
-            "select strength from %s where fromid=%d and toid=%d"
-            % (table, fromid, toid)
+        res = c.execute(
+            "select strength from ? where fromid=? and toid=?", (table, fromid, toid)
         ).fetchone()
-        if res == None:
+        if res is None:
             if layer == 0:
                 return -0.2
             if layer == 1:
@@ -37,23 +37,22 @@ class SearchNet:
         return res[0]
 
     def setstrength(self, fromid, toid, layer, strength):
+        c = self.con.cursor()
         if layer == 0:
             table = "wordhidden"
         else:
             table = "hiddenurl"
-        res = self.con.execute(
-            "select rowid from %s where fromid=%d and toid=%d" % (table, fromid, toid)
+        res = c.execute(
+            "select rowid from ? where fromid=? and toid=?", (table, fromid, toid)
         ).fetchone()
-        if res == None:
-            self.con.execute(
-                "insert into %s (fromid,toid,strength) values (%d,%d,%f)"
-                % (table, fromid, toid, strength)
+        if res is None:
+            c.execute(
+                "insert into ? (fromid,toid,strength) values (?,?,?)",
+                (table, fromid, toid, strength),
             )
         else:
             rowid = res[0]
-            self.con.execute(
-                "update %s set strength=%f where rowid=%d" % (table, strength, rowid)
-            )
+            c.execute("update ? set strength=? where rowid=?", (table, strength, rowid))
 
     def generatehiddennode(self, wordids, urls):
         if len(wordids) > 3:
@@ -62,13 +61,15 @@ class SearchNet:
         sorted_words = [str(id) for id in wordids]
         sorted_words.sort()
         createkey = "_".join(sorted_words)
-        res = self.con.execute(
-            "select rowid from hiddennode where create_key='%s'" % createkey
+
+        c = self.con.cursor()
+        res = c.execute(
+            "select rowid from hiddennode where create_key='?'", (createkey,)
         ).fetchone()
 
         # If not, create it
         if res == None:
-            cur = self.con.execute(
+            cur = c.execute(
                 "insert into hiddennode (create_key) values ('%s')" % createkey
             )
             hiddenid = cur.lastrowid
@@ -80,16 +81,15 @@ class SearchNet:
             self.con.commit()
 
     def getallhiddenids(self, wordids, urlids):
+        c = self.con.cursor()
         l1 = {}
         for wordid in wordids:
-            cur = self.con.execute(
-                "select toid from wordhidden where fromid=%d" % wordid
-            )
-            for row in cur:
+            for row in c.execute(
+                "select toid from wordhidden where fromid=?", (wordid,)
+            ):
                 l1[row[0]] = 1
         for urlid in urlids:
-            cur = self.con.execute("select fromid from hiddenurl where toid=%d" % urlid)
-            for row in cur:
+            for row in c.execute("select fromid from hiddenurl where toid=?", (urlid,)):
                 l1[row[0]] = 1
         return list(l1.keys())
 
