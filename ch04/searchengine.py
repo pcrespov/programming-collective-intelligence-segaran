@@ -28,12 +28,12 @@ class Crawler:
     # Auxilliary function for getting an entry id and adding
     # it if it's not present
     def getentryid(self, table, field, value, createnew=True):
-        cur = self.con.execute(
+        cur = self.con.cursor().execute(
             "select rowid from %s where %s='%s'" % (table, field, value)
         )
         res = cur.fetchone()
         if res == None:
-            cur = self.con.execute(
+            cur = self.con.cursor().execute(
                 "insert into %s (%s) values ('%s')" % (table, field, value)
             )
             return cur.lastrowid
@@ -59,7 +59,7 @@ class Crawler:
             if word in ignorewords:
                 continue
             wordid = self.getentryid("wordlist", "word", word)
-            self.con.execute(
+            self.con.cursor().execute(
                 "insert into wordlocation(urlid,wordid,location) values (%d,%d,%d)"
                 % (urlid, wordid, i)
             )
@@ -93,7 +93,7 @@ class Crawler:
         toid = self.getentryid("urllist", "url", urlTo)
         if fromid == toid:
             return
-        cur = self.con.execute(
+        cur = self.con.cursor().execute(
             "insert into link(fromid,toid) values (%d,%d)" % (fromid, toid)
         )
         linkid = cur.lastrowid
@@ -101,7 +101,7 @@ class Crawler:
             if word in ignorewords:
                 continue
             wordid = self.getentryid("wordlist", "word", word)
-            self.con.execute(
+            self.con.cursor().execute(
                 "insert into linkwords(linkid,wordid) values (%d,%d)" % (linkid, wordid)
             )
 
@@ -141,56 +141,56 @@ class Crawler:
 
     # Create the database tables
     def createindextables(self):
-        self.con.execute("create table urllist(url)")
-        self.con.execute("create table wordlist(word)")
-        self.con.execute("create table wordlocation(urlid,wordid,location)")
-        self.con.execute("create table link(fromid integer,toid integer)")
-        self.con.execute("create table linkwords(wordid,linkid)")
-        self.con.execute("create index wordidx on wordlist(word)")
-        self.con.execute("create index urlidx on urllist(url)")
-        self.con.execute("create index wordurlidx on wordlocation(wordid)")
-        self.con.execute("create index urltoidx on link(toid)")
-        self.con.execute("create index urlfromidx on link(fromid)")
+        self.con.cursor().execute("create table urllist(url)")
+        self.con.cursor().execute("create table wordlist(word)")
+        self.con.cursor().execute("create table wordlocation(urlid,wordid,location)")
+        self.con.cursor().execute("create table link(fromid integer,toid integer)")
+        self.con.cursor().execute("create table linkwords(wordid,linkid)")
+        self.con.cursor().execute("create index wordidx on wordlist(word)")
+        self.con.cursor().execute("create index urlidx on urllist(url)")
+        self.con.cursor().execute("create index wordurlidx on wordlocation(wordid)")
+        self.con.cursor().execute("create index urltoidx on link(toid)")
+        self.con.cursor().execute("create index urlfromidx on link(fromid)")
         self.dbcommit()
 
     def calculatepagerank(self, iterations=20):
         # clear out the current page rank tables
-        self.con.execute("drop table if exists pagerank")
-        self.con.execute("create table pagerank(urlid primary key,score)")
+        self.con.cursor().execute("drop table if exists pagerank")
+        self.con.cursor().execute("create table pagerank(urlid primary key,score)")
 
         # initialize every url with a page rank of 1
-        for (urlid,) in self.con.execute("select rowid from urllist"):
-            self.con.execute(
+        for (urlid,) in self.con.cursor().execute("select rowid from urllist"):
+            self.con.cursor().execute(
                 "insert into pagerank(urlid,score) values (%d,1.0)" % urlid
             )
         self.dbcommit()
 
         for i in range(iterations):
             print("Iteration %d" % (i))
-            for (urlid,) in self.con.execute("select rowid from urllist"):
+            for (urlid,) in self.con.cursor().execute("select rowid from urllist"):
                 pr = 0.15
 
                 # Loop through all the pages that link to this one
-                for (linker,) in self.con.execute(
+                for (linker,) in self.con.cursor().execute(
                     "select distinct fromid from link where toid=%d" % urlid
                 ):
                     # Get the page rank of the linker
-                    linkingpr = self.con.execute(
+                    linkingpr = self.con.cursor().execute(
                         "select score from pagerank where urlid=%d" % linker
                     ).fetchone()[0]
 
                     # Get the total number of links from the linker
-                    linkingcount = self.con.execute(
+                    linkingcount = self.con.cursor().execute(
                         "select count(*) from link where fromid=%d" % linker
                     ).fetchone()[0]
                     pr += 0.85 * (linkingpr / linkingcount)
-                self.con.execute(
+                self.con.cursor().execute(
                     "update pagerank set score=%f where urlid=%d" % (pr, urlid)
                 )
             self.dbcommit()
 
 
-class searcher:
+class Searcher:
     def __init__(self, dbname):
         self.con = sqlite.connect(dbname)
 
@@ -210,8 +210,8 @@ class searcher:
 
         for word in words:
             # Get the word ID
-            wordrow = self.con.execute(
-                "select rowid from wordlist where word='%s'" % word
+            wordrow = self.con.cursor().execute(
+                "select rowid from wordlist where word='?'", (word,)
             ).fetchone()
             if wordrow != None:
                 wordid = wordrow[0]
@@ -231,7 +231,7 @@ class searcher:
         # Create the query from the separate parts
         fullquery = "select %s from %s where %s" % (fieldlist, tablelist, clauselist)
         print(fullquery)
-        cur = self.con.execute(fullquery)
+        cur = self.con.cursor().execute(fullquery)
         rows = [row for row in cur]
 
         return rows, wordids
@@ -254,7 +254,7 @@ class searcher:
         return totalscores
 
     def geturlname(self, id):
-        return self.con.execute(
+        return self.con.cursor().execute(
             "select url from urllist where rowid=%d" % id
         ).fetchone()[0]
 
@@ -319,8 +319,8 @@ class searcher:
             [
                 (
                     u,
-                    self.con.execute(
-                        "select count(*) from link where toid=%d" % u
+                    self.con.cursor().execute(
+                        "select count(*) from link where toid=?", (u,)
                     ).fetchone()[0],
                 )
                 for u in uniqueurls
@@ -331,14 +331,14 @@ class searcher:
     def linktextscore(self, rows, wordids):
         linkscores = dict([(row[0], 0) for row in rows])
         for wordid in wordids:
-            cur = self.con.execute(
-                "select link.fromid,link.toid from linkwords,link where wordid=%d and linkwords.linkid=link.rowid"
-                % wordid
+            cur = self.con.cursor().execute(
+                "select link.fromid,link.toid from linkwords,link where wordid=? and linkwords.linkid=link.rowid"
+                , (wordid,)
             )
             for (fromid, toid) in cur:
                 if toid in linkscores:
-                    pr = self.con.execute(
-                        "select score from pagerank where urlid=%d" % fromid
+                    pr = self.con.cursor().execute(
+                        "select score from pagerank where urlid=?", (fromid,)
                     ).fetchone()[0]
                     linkscores[toid] += pr
         maxscore = max(linkscores.values())
@@ -352,8 +352,8 @@ class searcher:
             [
                 (
                     row[0],
-                    self.con.execute(
-                        "select score from pagerank where urlid=%d" % row[0]
+                    self.con.cursor().execute(
+                        "select score from pagerank where urlid=?", (row[0],)
                     ).fetchone()[0],
                 )
                 for row in rows
