@@ -1,17 +1,18 @@
 from copy import deepcopy
 from math import log
 from random import choice, randint, random
+from dataclasses import dataclass
+from typing import Callable, List
 
 
-class fwrapper:
-    def __init__(self, function, childcount, name):
-        self.function = function
-        self.childcount = childcount
-        self.name = name
+@dataclass
+class FWrapper:
+    function: Callable
+    childcount: int
+    name: str
 
-
-class node:
-    def __init__(self, fw, children):
+class Node:
+    def __init__(self, fw: FWrapper, children: List):
         self.function = fw.function
         self.name = fw.name
         self.children = children
@@ -26,80 +27,80 @@ class node:
             c.display(indent + 1)
 
 
-class paramnode:
-    def __init__(self, idx):
+class ParamNode:
+    def __init__(self, idx: int):
         self.idx = idx
 
-    def evaluate(self, inp):
+    def evaluate(self, inp: List):
         return inp[self.idx]
 
     def display(self, indent=0):
         print("%sp%d" % (" " * indent, self.idx))
 
 
-class constnode:
+class ConstNode:
     def __init__(self, v):
         self.v = v
 
-    def evaluate(self, inp):
+    def evaluate(self, inp: List):
         return self.v
 
     def display(self, indent=0):
         print("%s%d" % (" " * indent, self.v))
 
 
-addw = fwrapper(lambda l: l[0] + l[1], 2, "add")
-subw = fwrapper(lambda l: l[0] - l[1], 2, "subtract")
-mulw = fwrapper(lambda l: l[0] * l[1], 2, "multiply")
+addw = FWrapper(lambda l: l[0] + l[1], 2, "add")
+subw = FWrapper(lambda l: l[0] - l[1], 2, "subtract")
+mulw = FWrapper(lambda l: l[0] * l[1], 2, "multiply")
 
 
-def iffunc(l):
+def iffunc(l: List):
     if l[0] > 0:
         return l[1]
     else:
         return l[2]
 
 
-ifw = fwrapper(iffunc, 3, "if")
+ifw = FWrapper(iffunc, 3, "if")
 
 
-def isgreater(l):
+def isgreater(l: List):
     if l[0] > l[1]:
         return 1
     else:
         return 0
 
 
-gtw = fwrapper(isgreater, 2, "isgreater")
+gtw = FWrapper(isgreater, 2, "isgreater")
 
 flist = [addw, mulw, ifw, gtw, subw]
 
 
-def exampletree():
-    return node(
+def exampletree() ->Node:
+    return Node(
         ifw,
         [
-            node(gtw, [paramnode(0), constnode(3)]),
-            node(addw, [paramnode(1), constnode(5)]),
-            node(subw, [paramnode(1), constnode(2)]),
+            Node(gtw, [ParamNode(0), ConstNode(3)]),
+            Node(addw, [ParamNode(1), ConstNode(5)]),
+            Node(subw, [ParamNode(1), ConstNode(2)]),
         ],
     )
 
 
-def makerandomtree(pc, maxdepth=4, fpr=0.5, ppr=0.6):
+def makerandomtree(pc: int, maxdepth:int =4, fpr: float =0.5, ppr: float =0.6):
     if random() < fpr and maxdepth > 0:
         f = choice(flist)
         children = [
             makerandomtree(pc, maxdepth - 1, fpr, ppr) for i in range(f.childcount)
         ]
-        return node(f, children)
+        return Node(f, children)
     elif random() < ppr:
-        return paramnode(randint(0, pc - 1))
+        return ParamNode(randint(0, pc - 1))
     else:
-        return constnode(randint(0, 10))
+        return ConstNode(randint(0, 10))
 
 
-def hiddenfunction(x, y):
+def hiddenfunction(x: float, y: float):
     return x ** 2 + 2 * y + 3 * x + 5
 
 
@@ -112,7 +113,7 @@ def buildhiddenset():
     return rows
 
 
-def scorefunction(tree, s):
+def scorefunction(tree: Node, s:List):
     dif = 0
     for data in s:
         v = tree.evaluate([data[0], data[1]])
@@ -120,7 +121,8 @@ def scorefunction(tree, s):
     return dif
 
 
-def mutate(t, pc, probchange=0.1):
+def mutate(t: Node, pc:int, probchange:float =0.1):
+    print(t)
     if random() < probchange:
         return makerandomtree(pc)
     else:
@@ -192,7 +194,7 @@ def evolve(
                     )
                 )
             else:
-                # Add a random node to mix things up
+                # Add a random Node to mix things up
                 newpop.append(makerandomtree(pc))
 
         population = newpop
@@ -278,7 +280,7 @@ def tournament(pl):
     return z
 
 
-class humanplayer:
+class HumanPlayer:
     def evaluate(self, board):
 
         # Get my location and the location of other players
@@ -308,7 +310,7 @@ class humanplayer:
         return move
 
 
-class fwrapper:
+class FWrapper:
     def __init__(self, function, params, name):
         self.function = function
         self.childcount = param
