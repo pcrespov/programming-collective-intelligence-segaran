@@ -14,7 +14,7 @@ mynet = nn.SearchNet("nn.db")
 ignorewords = {"the": 1, "of": 1, "to": 1, "and": 1, "a": 1, "in": 1, "is": 1, "it": 1}
 
 
-class crawler:
+class Crawler:
     # Initialize the crawler with the name of database
     def __init__(self, dbname):
         self.con = sqlite.connect(dbname)
