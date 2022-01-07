@@ -144,10 +144,10 @@ def crossover(t1, t2, probswap=0.7, top=1):
         return result
 
 
-def getrankfunction(dataset):
+def getrankfunction(dataset) -> Callable:
     def rankfunction(population):
         scores = [(scorefunction(t, dataset), t) for t in population]
-        scores.sort()
+        scores=sorted(scores, key=lambda k:k[0])
         return scores
 
     return rankfunction
